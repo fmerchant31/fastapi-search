@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 app = FastAPI()
 DB_PATH = "articles.db"
-NEWS_URL = "https://news.ycombinator.com/"  # Example website
+NEWS_URL = "https://news.ycombinator.com/"  # Example source
 
 # Initialize the database if it doesn't exist
 def initialize_db():
@@ -21,26 +21,32 @@ def initialize_db():
         conn.commit()
         conn.close()
 
-# Scrape articles and insert into the database
+# Scrape articles and store them in the database
 def scrape_and_store():
-    response = requests.get(NEWS_URL)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    articles = []
-
-    for item in soup.select(".storylink"):
-        title = item.get_text()
-        link = item.get("href")
-        articles.append((title, link))
-
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    # Check if the database already has data
+    cursor.execute("SELECT COUNT(*) FROM news")
+    count = cursor.fetchone()[0]
 
-    # Insert scraped articles into the database
-    cursor.executemany("INSERT INTO news (title, link) VALUES (?, ?)", articles)
-    conn.commit()
+    if count == 0:  # Only scrape if the database is empty
+        response = requests.get(NEWS_URL)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        articles = []
+
+        # Scrape articles from the news source
+        for item in soup.select(".storylink"):
+            title = item.get_text()
+            link = item.get("href")
+            articles.append((title, link))
+
+        # Insert scraped articles into the database
+        cursor.executemany("INSERT INTO news (title, link) VALUES (?, ?)", articles)
+        conn.commit()
+
     conn.close()
 
-# Initialize the database and scrape data on startup
+# Call the initialization and scraping functions when the app starts
 initialize_db()
 scrape_and_store()
 
