@@ -74,6 +74,5 @@ Contributions are welcome! Feel free to submit a pull request or open an issue.
 This project is licensed under the MIT License.
 
 ## Contact
-For any inquiries, reach out to Fatema Merchant at fmerchant31@gmail.com.
+For any inquiries, reach out to Fatema Merchant at fatemamerchant31@gmail.com.
 
-# fastapi-search
