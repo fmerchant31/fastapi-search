@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 import sqlite3
 import os
+import requests
+from bs4 import BeautifulSoup
 
 app = FastAPI()
 DB_PATH = "articles.db"
+NEWS_URL = "https://news.ycombinator.com/"  # Example website
 
 # Initialize the database if it doesn't exist
 def initialize_db():
@@ -18,8 +21,28 @@ def initialize_db():
         conn.commit()
         conn.close()
 
-# Call the initialization function when the app starts
+# Scrape articles and insert into the database
+def scrape_and_store():
+    response = requests.get(NEWS_URL)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    articles = []
+
+    for item in soup.select(".storylink"):
+        title = item.get_text()
+        link = item.get("href")
+        articles.append((title, link))
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Insert scraped articles into the database
+    cursor.executemany("INSERT INTO news (title, link) VALUES (?, ?)", articles)
+    conn.commit()
+    conn.close()
+
+# Initialize the database and scrape data on startup
 initialize_db()
+scrape_and_store()
 
 # API Endpoint to get all articles
 @app.get("/articles")
