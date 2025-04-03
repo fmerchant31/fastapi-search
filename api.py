@@ -18,6 +18,17 @@ def initialize_db():
         ''')
         conn.close()
 
+# API Endpoint to add an article
+@app.post("/add_article")
+def add_article(title: str, link: str):
+    initialize_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO news (title, link) VALUES (?, ?)", (title, link))
+    conn.commit()
+    conn.close()
+    return {"message": "Article added successfully"}
+
 # API Endpoint to get all articles
 @app.get("/articles")
 def get_articles():
