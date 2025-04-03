@@ -3,10 +3,9 @@ import sqlite3
 import os
 
 app = FastAPI()
-
 DB_PATH = "articles.db"
 
-# Initialize the database and create the table if it doesn't exist
+# Initialize the database if it doesn't exist
 def initialize_db():
     if not os.path.exists(DB_PATH):
         conn = sqlite3.connect(DB_PATH)
@@ -16,23 +15,15 @@ def initialize_db():
                 link TEXT
             )
         ''')
+        conn.commit()
         conn.close()
 
-# API Endpoint to add an article
-@app.post("/add_article")
-def add_article(title: str, link: str):
-    initialize_db()
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO news (title, link) VALUES (?, ?)", (title, link))
-    conn.commit()
-    conn.close()
-    return {"message": "Article added successfully"}
+# Call the initialization function when the app starts
+initialize_db()
 
 # API Endpoint to get all articles
 @app.get("/articles")
 def get_articles():
-    initialize_db()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM news")
@@ -43,7 +34,6 @@ def get_articles():
 # API Endpoint to search articles by keyword
 @app.get("/search")
 def search_articles(q: str):
-    initialize_db()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM news WHERE title LIKE ?", ('%' + q + '%',))
